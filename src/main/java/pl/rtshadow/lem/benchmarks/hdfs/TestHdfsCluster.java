@@ -1,4 +1,4 @@
-package pl.rtshadow.lem.benchmarks;
+package pl.rtshadow.lem.benchmarks.hdfs;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
@@ -13,11 +13,8 @@ public class TestHdfsCluster {
   private MiniDFSCluster miniDFSCluster;
 
   public void start() throws IOException {
-    checkState(miniDFSCluster == null, "Cluster already started");
-
     Configuration configuration = new Configuration();
     configuration.set("dfs.blockreport.initialDelay", "0");
-    configuration.setBoolean("dfs.support.append", true);
     configuration.setBoolean("dfs.support.broken.append", true);
     configuration.setInt("dfs.datanode.data.dir.perm", 775);
     configuration.setInt("dfs.datanode.scan.period.hours", -1); // disable block scanner
@@ -31,8 +28,6 @@ public class TestHdfsCluster {
   }
 
   public void stop() {
-    if (miniDFSCluster != null) {
-      miniDFSCluster.shutdown();
-    }
+    miniDFSCluster.shutdown();
   }
 }

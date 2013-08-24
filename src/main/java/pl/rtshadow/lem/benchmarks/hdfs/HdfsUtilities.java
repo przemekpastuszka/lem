@@ -1,4 +1,4 @@
-package pl.rtshadow.lem.benchmarks;
+package pl.rtshadow.lem.benchmarks.hdfs;
 
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FSDataOutputStream;
