@@ -15,7 +15,7 @@ public class RealHdfsModule extends AbstractModule implements TestContext {
 
   @Override
   protected void configure() {
-    bind(TestContext.class).to(RealHdfsModule.class);
+    bind(TestContext.class).toInstance(this);
     bind(FileSystem.class).toInstance(fileSystem);
   }
 

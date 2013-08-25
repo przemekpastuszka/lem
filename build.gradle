@@ -20,3 +20,26 @@ dependencies {
   compile 'org.apache.hadoop:hadoop-test:1.2.1'
 }
 
+/*
+// Tried the libjars approach to set classpath instead of doing the fatjar, but can't make it work :(
+task runOnHadoop(type: Exec, dependsOn: jar) {
+    def allJars = []
+    for (file in configurations.compile) {
+      allJars.add('file://' + file)
+    }
+
+   environment 'LIBJARS', allJars.join(',')
+   commandLine '/home/przemek/hadoop/bin/hadoop', 'jar', files(jar.archivePath).singleFile, 'pl.rtshadow.lem.benchmarks.RealHdfsRunner',
+   '-libjars', allJars.join(',')
+}
+*/
+
+jar {
+  dependsOn configurations.runtime
+  from { configurations.runtime.collect { it.isDirectory() ? it : zipTree(it) } }
+}
+
+task runOnHadoop(type: Exec, dependsOn: jar) {
+   commandLine '/home/przemek/hadoop/bin/hadoop', 'jar', files(jar.archivePath).singleFile, 'pl.rtshadow.lem.benchmarks.RealHdfsRunner'
+}
+
