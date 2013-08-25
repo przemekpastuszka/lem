@@ -29,7 +29,7 @@ task runOnHadoop(type: Exec, dependsOn: jar) {
     }
 
    environment 'LIBJARS', allJars.join(',')
-   commandLine '/home/przemek/hadoop/bin/hadoop', 'jar', files(jar.archivePath).singleFile, 'pl.rtshadow.lem.benchmarks.RealHdfsRunner',
+   commandLine 'hadoop', 'jar', files(jar.archivePath).singleFile, 'pl.rtshadow.lem.benchmarks.RealHdfsRunner',
    '-libjars', allJars.join(',')
 }
 */
@@ -40,6 +40,6 @@ jar {
 }
 
 task runOnHadoop(type: Exec, dependsOn: jar) {
-   commandLine '/home/przemek/hadoop/bin/hadoop', 'jar', files(jar.archivePath).singleFile, 'pl.rtshadow.lem.benchmarks.RealHdfsRunner'
+   commandLine 'hadoop', 'jar', files(jar.archivePath).singleFile, 'pl.rtshadow.lem.benchmarks.RealHdfsRunner'
 }
 
