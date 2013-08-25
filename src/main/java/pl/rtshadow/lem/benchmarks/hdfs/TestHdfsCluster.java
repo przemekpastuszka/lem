@@ -14,10 +14,8 @@ public class TestHdfsCluster {
 
   public void start() throws IOException {
     Configuration configuration = new Configuration();
-    configuration.set("dfs.blockreport.initialDelay", "0");
     configuration.setBoolean("dfs.support.broken.append", true);
     configuration.setInt("dfs.datanode.data.dir.perm", 775);
-    configuration.setInt("dfs.datanode.scan.period.hours", -1); // disable block scanner
 
     miniDFSCluster = new MiniDFSCluster(configuration, NUM_DATA_NODES, true, null);
     miniDFSCluster.waitActive();
