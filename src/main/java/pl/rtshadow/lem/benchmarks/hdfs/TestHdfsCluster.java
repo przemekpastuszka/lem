@@ -16,6 +16,8 @@ public class TestHdfsCluster {
     Configuration configuration = new Configuration();
     configuration.setBoolean("dfs.support.broken.append", true);
     configuration.setInt("dfs.datanode.data.dir.perm", 775);
+    // set block size to small value to test more interesting cases
+    configuration.setInt("dfs.block.size", 512);
 
     miniDFSCluster = new MiniDFSCluster(configuration, NUM_DATA_NODES, true, null);
     miniDFSCluster.waitActive();
