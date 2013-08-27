@@ -27,14 +27,11 @@ compileJava {
 
 
 task runOnHadoop(type: Exec, dependsOn: jar) {
-    def allJars = []
-    for (file in configurations.compile) {
-      allJars.add(file)
-    }
-   
-//   environment 'HADOOP_CLASSPATH', allJars.join(':')
- //  commandLine 'hadoop', 'jar', files(jar.archivePath).singleFile, 'pl.rtshadow.lem.benchmarks.RealHdfsRunner'
-	workingDir "${rootDir}/fabric"
-	commandLine 'fab', "-H ${System.properties['master']}", "deploy_and_run:${files(jar.archivePath).singleFile},pl.rtshadow.lem.benchmarks.RealHdfsRunner,${allJars.join(';')}"
+  def allJars = []
+  for (file in configurations.compile) {
+    allJars.add(file)
+  }
+  workingDir "${rootDir}/fabric"
+  commandLine 'fab', "-H ${System.properties['master']}", "deploy_and_run:${files(jar.archivePath).singleFile},pl.rtshadow.lem.benchmarks.RealHdfsRunner,${allJars.join(';')}"
 }
 
