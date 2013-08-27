@@ -20,6 +20,11 @@ dependencies {
   compile 'org.apache.hadoop:hadoop-test:1.2.1'
 }
 
+compileJava {
+  sourceCompatibility = 1.6
+  targetCompatibility = 1.6
+}
+
 /*
 // Tried the libjars approach to set classpath instead of doing the fatjar, but can't make it work :(
 task runOnHadoop(type: Exec, dependsOn: jar) {
