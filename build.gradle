@@ -25,26 +25,16 @@ compileJava {
   targetCompatibility = 1.6
 }
 
-/*
-// Tried the libjars approach to set classpath instead of doing the fatjar, but can't make it work :(
+
 task runOnHadoop(type: Exec, dependsOn: jar) {
     def allJars = []
     for (file in configurations.compile) {
-      allJars.add('file://' + file)
+      allJars.add(file)
     }
-
-   environment 'LIBJARS', allJars.join(',')
-   commandLine 'hadoop', 'jar', files(jar.archivePath).singleFile, 'pl.rtshadow.lem.benchmarks.RealHdfsRunner',
-   '-libjars', allJars.join(',')
-}
-*/
-
-jar {
-  dependsOn configurations.runtime
-  from { configurations.runtime.collect { it.isDirectory() ? it : zipTree(it) } }
-}
-
-task runOnHadoop(type: Exec, dependsOn: jar) {
-   commandLine 'hadoop', 'jar', files(jar.archivePath).singleFile, 'pl.rtshadow.lem.benchmarks.RealHdfsRunner'
+   
+//   environment 'HADOOP_CLASSPATH', allJars.join(':')
+ //  commandLine 'hadoop', 'jar', files(jar.archivePath).singleFile, 'pl.rtshadow.lem.benchmarks.RealHdfsRunner'
+	workingDir "${rootDir}/fabric"
+	commandLine 'fab', "-H ${System.properties['master']}", "deploy_and_run:${files(jar.archivePath).singleFile},pl.rtshadow.lem.benchmarks.RealHdfsRunner,${allJars.join(';')}"
 }
 
