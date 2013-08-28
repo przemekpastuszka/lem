@@ -11,8 +11,9 @@ dependencies {
   compile 'com.google.guava:guava:14.0.1'
   compile 'com.google.inject:guice:3.0'
   compile 'org.apache.hadoop:hadoop-core:1.2.1'
-//  compile 'org.apache.hadoop:hadoop-common:2.0.5-alpha'
-//  compile 'org.apache.hadoop:hadoop-hdfs:2.0.5-alpha'
+//  compile 'org.apache.hadoop:hadoop-common:2.1.0-beta'
+ // compile 'org.apache.hadoop:hadoop-hdfs:2.1.0-beta'
+  //compile 'org.apache.hadoop:hadoop-minicluster:2.1.0-beta'
 
   compile 'org.mockito:mockito-all:1.9.5'
   compile 'org.easytesting:fest-assert:1.4'
