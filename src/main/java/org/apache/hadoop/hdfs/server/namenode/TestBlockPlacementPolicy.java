@@ -10,11 +10,12 @@ import org.apache.hadoop.hdfs.protocol.Block;
 import org.apache.hadoop.hdfs.protocol.LocatedBlock;
 import org.apache.hadoop.net.NetworkTopology;
 import org.apache.hadoop.net.Node;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
-import javax.naming.OperationNotSupportedException;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
 import java.util.regex.Pattern;
 
 import static com.google.common.collect.Collections2.filter;
@@ -27,6 +28,7 @@ public class TestBlockPlacementPolicy extends BlockPlacementPolicy {
   private final static Pattern MANAGED_FILES_DIRECTORY = compile(createPathFor("(\\w+)"));
 
   private final BlockPlacementPolicy defaultPolicy = new BlockPlacementPolicyDefault();
+  private Configuration configuration;
   private DistributedFileSystem fileSystem;
 
   @Override
@@ -53,16 +55,23 @@ public class TestBlockPlacementPolicy extends BlockPlacementPolicy {
 
   @Override
   protected void initialize(Configuration conf, FSClusterStats stats, NetworkTopology clusterMap) {
-    try {
-      fileSystem = (DistributedFileSystem) DistributedFileSystem.get(conf);
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+    this.configuration = conf;
     defaultPolicy.initialize(conf, stats, clusterMap);
   }
 
+  private DistributedFileSystem getFileSystem() {
+    if (fileSystem == null) {
+      try {
+        fileSystem = (DistributedFileSystem) DistributedFileSystem.get(configuration);
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    }
+    return fileSystem;
+  }
+
   private static String createPathFor(String fileGroupName) {
-    return format("/files/%s/", fileGroupName);
+    return format("/managed/%s/", fileGroupName);
   }
 
   private List<DatanodeDescriptor> getPossibleLocationsFor(String srcPath, List<DatanodeDescriptor> chosenNodes) {
@@ -81,7 +90,7 @@ public class TestBlockPlacementPolicy extends BlockPlacementPolicy {
               }
             }));
 
-        if(possibleLocations.isEmpty()) {
+        if (possibleLocations.isEmpty()) {
           return chosenNodes;
         } else {
           return possibleLocations;
@@ -96,7 +105,7 @@ public class TestBlockPlacementPolicy extends BlockPlacementPolicy {
   private Collection<String> retrieveLocationsFor(FileStatus[] files, int blockId) throws IOException {
     Collection<String> blockLocations = newHashSet();
     for (FileStatus file : files) {
-      BlockLocation[] blocks = fileSystem.getFileBlockLocations(file, 0, 100);
+      BlockLocation[] blocks = getFileSystem().getFileBlockLocations(file, 0, 100);
       if (blocks.length > blockId) {
         blockLocations.addAll(newArrayList(blocks[blockId].getHosts()));
       }
@@ -106,7 +115,7 @@ public class TestBlockPlacementPolicy extends BlockPlacementPolicy {
 
   private int computeNumberOfNextBlock(String path) {
     try {
-      BlockLocation[] fileStatus = fileSystem.getFileBlockLocations(fileSystem.getFileStatus(new Path(path)), 0, 100);
+      BlockLocation[] fileStatus = getFileSystem().getFileBlockLocations(getFileSystem().getFileStatus(new Path(path)), 0, 100);
       return fileStatus.length + 1;
     } catch (IOException e) {
       return 0;
@@ -114,7 +123,7 @@ public class TestBlockPlacementPolicy extends BlockPlacementPolicy {
   }
 
   private FileStatus[] listGroup(String fileGroupName) throws IOException {
-    return fileSystem.listStatus(new Path(createPathFor(fileGroupName)));
+    return getFileSystem().listStatus(new Path(createPathFor(fileGroupName)));
   }
 
   private String extractFileGroupName(String path) {
