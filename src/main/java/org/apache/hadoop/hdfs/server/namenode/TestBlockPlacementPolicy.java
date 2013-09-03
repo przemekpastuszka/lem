@@ -1,6 +1,9 @@
 package org.apache.hadoop.hdfs.server.namenode;
 
+import com.google.common.base.Function;
 import com.google.common.base.Predicate;
+import com.google.common.collect.Collections2;
+import com.google.common.collect.Lists;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.BlockLocation;
 import org.apache.hadoop.fs.FileStatus;
@@ -12,34 +15,34 @@ import org.apache.hadoop.net.NetworkTopology;
 import org.apache.hadoop.net.Node;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 import java.util.regex.Pattern;
 
 import static com.google.common.collect.Collections2.filter;
+import static com.google.common.collect.Collections2.transform;
 import static com.google.common.collect.Lists.newArrayList;
 import static com.google.common.collect.Sets.newHashSet;
 import static java.lang.String.format;
+import static java.util.Collections.emptyList;
 import static java.util.regex.Pattern.compile;
 
 public class TestBlockPlacementPolicy extends BlockPlacementPolicy {
-  private final static Pattern MANAGED_FILES_DIRECTORY = compile(createPathFor("(\\w+)"));
+  private final static Pattern MANAGED_FILES_DIRECTORY = compile(createPathFor("(\\w+)") + "\\w+");
 
   private final BlockPlacementPolicy defaultPolicy = new BlockPlacementPolicyDefault();
   private Configuration configuration;
   private DistributedFileSystem fileSystem;
+  private NetworkTopology networkTopology;
 
   @Override
   DatanodeDescriptor[] chooseTarget(String srcPath, int numOfReplicas, DatanodeDescriptor writer, List<DatanodeDescriptor> chosenNodes, long blocksize) {
-    List<DatanodeDescriptor> possibleLocations = getPossibleLocationsFor(srcPath, chosenNodes);
+    List<DatanodeDescriptor> possibleLocations = getPossibleLocationsFor(srcPath);
     return defaultPolicy.chooseTarget(srcPath, numOfReplicas, writer, possibleLocations, blocksize);
   }
 
   @Override
   public DatanodeDescriptor[] chooseTarget(String srcPath, int numOfReplicas, DatanodeDescriptor writer, List<DatanodeDescriptor> chosenNodes, HashMap<Node, Node> excludedNodes, long blocksize) {
-    List<DatanodeDescriptor> possibleLocations = getPossibleLocationsFor(srcPath, chosenNodes);
+    List<DatanodeDescriptor> possibleLocations = getPossibleLocationsFor(srcPath);
     return defaultPolicy.chooseTarget(srcPath, numOfReplicas, writer, possibleLocations, excludedNodes, blocksize);
   }
 
@@ -56,6 +59,7 @@ public class TestBlockPlacementPolicy extends BlockPlacementPolicy {
   @Override
   protected void initialize(Configuration conf, FSClusterStats stats, NetworkTopology clusterMap) {
     this.configuration = conf;
+    this.networkTopology = clusterMap;
     defaultPolicy.initialize(conf, stats, clusterMap);
   }
 
@@ -74,7 +78,7 @@ public class TestBlockPlacementPolicy extends BlockPlacementPolicy {
     return format("/managed/%s/", fileGroupName);
   }
 
-  private List<DatanodeDescriptor> getPossibleLocationsFor(String srcPath, List<DatanodeDescriptor> chosenNodes) {
+  private List<DatanodeDescriptor> getPossibleLocationsFor(String srcPath) {
     try {
       if (isManaged(srcPath)) {
         String fileGroup = extractFileGroupName(srcPath);
@@ -82,24 +86,17 @@ public class TestBlockPlacementPolicy extends BlockPlacementPolicy {
 
         final Collection<String> possibleLocationsHosts = retrieveLocationsFor(listGroup(fileGroup), nextBlockId);
 
-        ArrayList<DatanodeDescriptor> possibleLocations = newArrayList(
-            filter(chosenNodes, new Predicate<DatanodeDescriptor>() {
-              @Override
-              public boolean apply(DatanodeDescriptor input) {
-                return possibleLocationsHosts.contains(input.getHostName());
-              }
-            }));
-
-        if (possibleLocations.isEmpty()) {
-          return chosenNodes;
-        } else {
-          return possibleLocations;
-        }
+        return newArrayList(transform(possibleLocationsHosts, new Function<String, DatanodeDescriptor>() {
+          @Override
+          public DatanodeDescriptor apply(String location) {
+            return (DatanodeDescriptor) networkTopology.getNode(location);
+          }
+        }));
       }
     } catch (IOException e) {
       throw new RuntimeException();
     }
-    return chosenNodes;
+    return emptyList();
   }
 
   private Collection<String> retrieveLocationsFor(FileStatus[] files, int blockId) throws IOException {
