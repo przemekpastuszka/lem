@@ -32,7 +32,7 @@ import static java.util.Collections.emptyList;
 import static java.util.regex.Pattern.compile;
 
 public class TestBlockPlacementPolicy extends BlockPlacementPolicy {
-  private final static Pattern MANAGED_FILES_DIRECTORY = compile(createPathFor("(\\w+)") + "\\w+");
+  private final static Pattern MANAGED_FILES_DIRECTORY = compile(createPathFor("(\\w+)") + ".+");
 
   private final BlockPlacementPolicy defaultPolicy = new BlockPlacementPolicyDefault();
   private Configuration configuration;
@@ -117,7 +117,7 @@ public class TestBlockPlacementPolicy extends BlockPlacementPolicy {
   private Collection<String> retrieveLocationsFor(FileStatus[] files, int blockId) throws IOException {
     Collection<String> blockLocations = newHashSet();
     for (FileStatus file : files) {
-      BlockLocation[] blocks = getFileSystem().getFileBlockLocations(file, 0, 100);
+      BlockLocation[] blocks = getFileSystem().getFileBlockLocations(file, 0, Long.MAX_VALUE);
       if (blocks.length > blockId) {
         blockLocations.addAll(newArrayList(blocks[blockId].getTopologyPaths()));
       }
@@ -127,7 +127,7 @@ public class TestBlockPlacementPolicy extends BlockPlacementPolicy {
 
   private int computeNumberOfNextBlock(String path) {
     try {
-      BlockLocation[] fileStatus = getFileSystem().getFileBlockLocations(getFileSystem().getFileStatus(new Path(path)), 0, 100);
+      BlockLocation[] fileStatus = getFileSystem().getFileBlockLocations(getFileSystem().getFileStatus(new Path(path)), 0, Long.MAX_VALUE);
       return fileStatus.length;
     } catch (IOException e) {
       return 0;

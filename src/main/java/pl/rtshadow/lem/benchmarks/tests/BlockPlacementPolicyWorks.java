@@ -13,6 +13,7 @@ import pl.rtshadow.lem.benchmarks.contexts.AbstractTestWithContext;
 import pl.rtshadow.lem.benchmarks.hdfs.HdfsUtilities;
 
 import java.io.IOException;
+import java.util.UUID;
 
 import static com.google.common.collect.Sets.newHashSet;
 import static org.fest.assertions.Assertions.assertThat;
@@ -20,8 +21,9 @@ import static pl.rtshadow.lem.benchmarks.guice.GuiceInjector.getInstance;
 
 public class BlockPlacementPolicyWorks extends AbstractTestWithContext {
   public static final int NUMBER_OF_WRITES = 100;
-  public static final Path X_FILE_PATH = new Path("/managed/A/x");
-  public static final Path Y_FILE_PATH = new Path("/managed/A/y");
+  public static final String NEW_DATA = "newData";
+  private Path X_FILE_PATH;
+  private Path Y_FILE_PATH;
 
   private FileSystem fileSystem;
 
@@ -29,31 +31,28 @@ public class BlockPlacementPolicyWorks extends AbstractTestWithContext {
   public void setup() throws IOException {
     fileSystem = getInstance(FileSystem.class);
 
+    X_FILE_PATH = new Path("/managed/A/x" + UUID.randomUUID());
+    Y_FILE_PATH = new Path("/managed/A/y" + UUID.randomUUID());
+
     fileSystem.mkdirs(new Path("/managed"));
     fileSystem.mkdirs(new Path("/managed/A"));
     fileSystem.mkdirs(new Path("/managed/B"));
   }
 
-  @Ignore
   @Test
   public void placesBlocksTogetherNoClose() throws IOException {
     FSDataOutputStream fileX = fileSystem.create(X_FILE_PATH);
     FSDataOutputStream fileY = fileSystem.create(Y_FILE_PATH);
 
     for (int i = 0; i < NUMBER_OF_WRITES; ++i) {
-      Text.writeString(fileX, "newDataX");
-      Text.writeString(fileY, "newDataY");
+      Text.writeString(fileX, NEW_DATA);
+      Text.writeString(fileY, NEW_DATA);
     }
 
     fileX.close();
     fileY.close();
 
-    BlockLocation[] blocksX = getFileBlocksFor(X_FILE_PATH);
-    BlockLocation[] blocksY = getFileBlocksFor(Y_FILE_PATH);
-
-    for (int i = 0; i < blocksX.length && i < blocksY.length; ++i) {
-      assertThat(newHashSet(blocksX[i].getNames())).isEqualTo(newHashSet(blocksY[i].getNames()));
-    }
+    checkBlocksAreColocated();
   }
 
   @Test
@@ -62,15 +61,19 @@ public class BlockPlacementPolicyWorks extends AbstractTestWithContext {
     HdfsUtilities.writeFile(fileSystem, Y_FILE_PATH, "");
 
     for (int i = 0; i < NUMBER_OF_WRITES; ++i) {
-      HdfsUtilities.appendFile(fileSystem, X_FILE_PATH, "newDataX");
-      HdfsUtilities.appendFile(fileSystem, Y_FILE_PATH, "newDataY");
+      HdfsUtilities.appendFile(fileSystem, X_FILE_PATH, NEW_DATA);
+      HdfsUtilities.appendFile(fileSystem, Y_FILE_PATH, NEW_DATA);
     }
 
+    checkBlocksAreColocated();
+  }
+
+  private void checkBlocksAreColocated() throws IOException {
     BlockLocation[] blocksX = getFileBlocksFor(X_FILE_PATH);
     BlockLocation[] blocksY = getFileBlocksFor(Y_FILE_PATH);
 
     for (int i = 0; i < blocksX.length && i < blocksY.length; ++i) {
-      assertThat(newHashSet(blocksX[i].getNames())).isEqualTo(newHashSet(blocksY[i].getNames()));
+      assertThat(newHashSet(blocksX[i].getNames())).as("Locations inequality at " + i).isEqualTo(newHashSet(blocksY[i].getNames()));
     }
   }
 

@@ -12,6 +12,7 @@ import org.junit.runner.Result;
 import pl.rtshadow.lem.benchmarks.guice.GuiceInjector;
 import pl.rtshadow.lem.benchmarks.guice.modules.RealHdfsModule;
 import pl.rtshadow.lem.benchmarks.tests.AppendCorrectness;
+import pl.rtshadow.lem.benchmarks.tests.BlockPlacementPolicyWorks;
 import pl.rtshadow.lem.benchmarks.tests.SimpleHdfsWriteReads;
 
 public class RealHdfsRunner extends Configured implements Tool {
@@ -25,7 +26,7 @@ public class RealHdfsRunner extends Configured implements Tool {
     FileSystem fileSystem = FileSystem.get(getConf());
     GuiceInjector.setModule(new RealHdfsModule(fileSystem));
 
-    Result result = JUnitCore.runClasses(SimpleHdfsWriteReads.class, AppendCorrectness.class);
+    Result result = JUnitCore.runClasses(SimpleHdfsWriteReads.class, AppendCorrectness.class, BlockPlacementPolicyWorks.class);
     new TextListener(System.out).testRunFinished(result);
 
     return result.getFailureCount() > 0 ? 1 : 0;
