@@ -3,6 +3,7 @@ package org.apache.hadoop.hdfs.server.namenode;
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;
+import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.BlockLocation;
@@ -16,10 +17,14 @@ import org.apache.hadoop.net.Node;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.google.common.collect.Collections2.filter;
 import static com.google.common.collect.Collections2.transform;
+import static com.google.common.collect.Iterators.concat;
+import static com.google.common.collect.Iterators.limit;
+import static com.google.common.collect.Iterators.toArray;
 import static com.google.common.collect.Lists.newArrayList;
 import static com.google.common.collect.Sets.newHashSet;
 import static java.lang.String.format;
@@ -37,13 +42,19 @@ public class TestBlockPlacementPolicy extends BlockPlacementPolicy {
   @Override
   DatanodeDescriptor[] chooseTarget(String srcPath, int numOfReplicas, DatanodeDescriptor writer, List<DatanodeDescriptor> chosenNodes, long blocksize) {
     List<DatanodeDescriptor> possibleLocations = getPossibleLocationsFor(srcPath);
-    return defaultPolicy.chooseTarget(srcPath, numOfReplicas, writer, possibleLocations, blocksize);
+    if(!possibleLocations.isEmpty()) {
+      return formPipeline(possibleLocations, chosenNodes, numOfReplicas);
+    }
+    return defaultPolicy.chooseTarget(srcPath, numOfReplicas, writer, chosenNodes, blocksize);
   }
 
   @Override
   public DatanodeDescriptor[] chooseTarget(String srcPath, int numOfReplicas, DatanodeDescriptor writer, List<DatanodeDescriptor> chosenNodes, HashMap<Node, Node> excludedNodes, long blocksize) {
     List<DatanodeDescriptor> possibleLocations = getPossibleLocationsFor(srcPath);
-    return defaultPolicy.chooseTarget(srcPath, numOfReplicas, writer, possibleLocations, excludedNodes, blocksize);
+    if(!possibleLocations.isEmpty()) {
+      return formPipeline(possibleLocations, chosenNodes, numOfReplicas);
+    }
+    return defaultPolicy.chooseTarget(srcPath, numOfReplicas, writer, chosenNodes, excludedNodes, blocksize);
   }
 
   @Override
@@ -78,6 +89,10 @@ public class TestBlockPlacementPolicy extends BlockPlacementPolicy {
     return format("/managed/%s/", fileGroupName);
   }
 
+  private DatanodeDescriptor[] formPipeline(List<DatanodeDescriptor> desiredNodes, List<DatanodeDescriptor> chosenNodes, int numOfReplicas) {
+    return toArray(limit(concat(desiredNodes.iterator(), chosenNodes.iterator()), numOfReplicas), DatanodeDescriptor.class);
+  }
+
   private List<DatanodeDescriptor> getPossibleLocationsFor(String srcPath) {
     try {
       if (isManaged(srcPath)) {
@@ -104,7 +119,7 @@ public class TestBlockPlacementPolicy extends BlockPlacementPolicy {
     for (FileStatus file : files) {
       BlockLocation[] blocks = getFileSystem().getFileBlockLocations(file, 0, 100);
       if (blocks.length > blockId) {
-        blockLocations.addAll(newArrayList(blocks[blockId].getHosts()));
+        blockLocations.addAll(newArrayList(blocks[blockId].getTopologyPaths()));
       }
     }
     return blockLocations;
@@ -113,7 +128,7 @@ public class TestBlockPlacementPolicy extends BlockPlacementPolicy {
   private int computeNumberOfNextBlock(String path) {
     try {
       BlockLocation[] fileStatus = getFileSystem().getFileBlockLocations(getFileSystem().getFileStatus(new Path(path)), 0, 100);
-      return fileStatus.length + 1;
+      return fileStatus.length;
     } catch (IOException e) {
       return 0;
     }
@@ -124,7 +139,9 @@ public class TestBlockPlacementPolicy extends BlockPlacementPolicy {
   }
 
   private String extractFileGroupName(String path) {
-    return MANAGED_FILES_DIRECTORY.matcher(path).group(1);
+    Matcher matcher = MANAGED_FILES_DIRECTORY.matcher(path);
+    matcher.matches();
+    return matcher.group(1);
   }
 
   private boolean isManaged(String path) {

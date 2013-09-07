@@ -7,8 +7,10 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.Text;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import pl.rtshadow.lem.benchmarks.contexts.AbstractTestWithContext;
+import pl.rtshadow.lem.benchmarks.hdfs.HdfsUtilities;
 
 import java.io.IOException;
 
@@ -32,8 +34,9 @@ public class BlockPlacementPolicyWorks extends AbstractTestWithContext {
     fileSystem.mkdirs(new Path("/managed/B"));
   }
 
+  @Ignore
   @Test
-  public void placesBlocksTogether() throws IOException {
+  public void placesBlocksTogetherNoClose() throws IOException {
     FSDataOutputStream fileX = fileSystem.create(X_FILE_PATH);
     FSDataOutputStream fileY = fileSystem.create(Y_FILE_PATH);
 
@@ -44,6 +47,24 @@ public class BlockPlacementPolicyWorks extends AbstractTestWithContext {
 
     fileX.close();
     fileY.close();
+
+    BlockLocation[] blocksX = getFileBlocksFor(X_FILE_PATH);
+    BlockLocation[] blocksY = getFileBlocksFor(Y_FILE_PATH);
+
+    for (int i = 0; i < blocksX.length && i < blocksY.length; ++i) {
+      assertThat(newHashSet(blocksX[i].getNames())).isEqualTo(newHashSet(blocksY[i].getNames()));
+    }
+  }
+
+  @Test
+  public void placesBlocksTogetherWithCloseAfterEachWrite() throws IOException {
+    HdfsUtilities.writeFile(fileSystem, X_FILE_PATH, "");
+    HdfsUtilities.writeFile(fileSystem, Y_FILE_PATH, "");
+
+    for (int i = 0; i < NUMBER_OF_WRITES; ++i) {
+      HdfsUtilities.appendFile(fileSystem, X_FILE_PATH, "newDataX");
+      HdfsUtilities.appendFile(fileSystem, Y_FILE_PATH, "newDataY");
+    }
 
     BlockLocation[] blocksX = getFileBlocksFor(X_FILE_PATH);
     BlockLocation[] blocksY = getFileBlocksFor(Y_FILE_PATH);
