@@ -1,10 +1,21 @@
 package org.apache.hadoop.hdfs.server.namenode;
 
-import com.google.common.base.Function;
-import com.google.common.base.Predicate;
-import com.google.common.collect.Collections2;
-import com.google.common.collect.Iterators;
-import com.google.common.collect.Lists;
+import static com.google.common.collect.Collections2.transform;
+import static com.google.common.collect.Iterators.concat;
+import static com.google.common.collect.Iterators.limit;
+import static com.google.common.collect.Iterators.toArray;
+import static com.google.common.collect.Lists.newArrayList;
+import static com.google.common.collect.Sets.newHashSet;
+import static java.util.Collections.emptyList;
+import static java.util.regex.Pattern.compile;
+
+import java.io.IOException;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.BlockLocation;
 import org.apache.hadoop.fs.FileStatus;
@@ -15,24 +26,10 @@ import org.apache.hadoop.hdfs.protocol.LocatedBlock;
 import org.apache.hadoop.net.NetworkTopology;
 import org.apache.hadoop.net.Node;
 
-import java.io.IOException;
-import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import static com.google.common.collect.Collections2.filter;
-import static com.google.common.collect.Collections2.transform;
-import static com.google.common.collect.Iterators.concat;
-import static com.google.common.collect.Iterators.limit;
-import static com.google.common.collect.Iterators.toArray;
-import static com.google.common.collect.Lists.newArrayList;
-import static com.google.common.collect.Sets.newHashSet;
-import static java.lang.String.format;
-import static java.util.Collections.emptyList;
-import static java.util.regex.Pattern.compile;
+import com.google.common.base.Function;
 
 public class TestBlockPlacementPolicy extends BlockPlacementPolicy {
-  private final static Pattern MANAGED_FILES_DIRECTORY = compile(createPathFor("(\\w+)") + ".+");
+  private final static Pattern MANAGED_FILES_DIRECTORY = compile("(.*/managed/[^/]+/).+");
 
   private final BlockPlacementPolicy defaultPolicy = new BlockPlacementPolicyDefault();
   private Configuration configuration;
@@ -85,10 +82,6 @@ public class TestBlockPlacementPolicy extends BlockPlacementPolicy {
     return fileSystem;
   }
 
-  private static String createPathFor(String fileGroupName) {
-    return format("/managed/%s/", fileGroupName);
-  }
-
   private DatanodeDescriptor[] formPipeline(List<DatanodeDescriptor> desiredNodes, List<DatanodeDescriptor> chosenNodes, int numOfReplicas) {
     return toArray(limit(concat(desiredNodes.iterator(), chosenNodes.iterator()), numOfReplicas), DatanodeDescriptor.class);
   }
@@ -96,10 +89,10 @@ public class TestBlockPlacementPolicy extends BlockPlacementPolicy {
   private List<DatanodeDescriptor> getPossibleLocationsFor(String srcPath) {
     try {
       if (isManaged(srcPath)) {
-        String fileGroup = extractFileGroupName(srcPath);
+        String fileGroupPath = extractFileGroupPath(srcPath);
         int nextBlockId = computeNumberOfNextBlock(srcPath);
 
-        final Collection<String> possibleLocationsHosts = retrieveLocationsFor(listGroup(fileGroup), nextBlockId);
+        final Collection<String> possibleLocationsHosts = retrieveLocationsFor(listGroup(fileGroupPath), nextBlockId);
 
         return newArrayList(transform(possibleLocationsHosts, new Function<String, DatanodeDescriptor>() {
           @Override
@@ -134,11 +127,11 @@ public class TestBlockPlacementPolicy extends BlockPlacementPolicy {
     }
   }
 
-  private FileStatus[] listGroup(String fileGroupName) throws IOException {
-    return getFileSystem().listStatus(new Path(createPathFor(fileGroupName)));
+  private FileStatus[] listGroup(String fileGroupPath) throws IOException {
+    return getFileSystem().listStatus(new Path(fileGroupPath));
   }
 
-  private String extractFileGroupName(String path) {
+  private String extractFileGroupPath(String path) {
     Matcher matcher = MANAGED_FILES_DIRECTORY.matcher(path);
     matcher.matches();
     return matcher.group(1);

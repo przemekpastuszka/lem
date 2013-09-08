@@ -31,12 +31,12 @@ public class BlockPlacementPolicyWorksTest extends AbstractTestWithContext {
   public void setup() throws IOException {
     fileSystem = getInstance(FileSystem.class);
 
-    X_FILE_PATH = new Path("/managed/A/x" + UUID.randomUUID());
-    Y_FILE_PATH = new Path("/managed/A/y" + UUID.randomUUID());
+    String managedDirectory = "managed/A" + UUID.randomUUID();
+    X_FILE_PATH = new Path(managedDirectory + "/x");
+    Y_FILE_PATH = new Path(managedDirectory + "/y");
 
-    fileSystem.mkdirs(new Path("/managed"));
-    fileSystem.mkdirs(new Path("/managed/A"));
-    fileSystem.mkdirs(new Path("/managed/B"));
+    fileSystem.mkdirs(new Path("managed"));
+    fileSystem.mkdirs(new Path(managedDirectory));
   }
 
   @Test
