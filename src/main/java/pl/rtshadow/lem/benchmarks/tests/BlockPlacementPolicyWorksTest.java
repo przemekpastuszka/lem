@@ -1,25 +1,25 @@
 package pl.rtshadow.lem.benchmarks.tests;
 
 
+import static com.google.common.collect.Sets.newHashSet;
+import static org.fest.assertions.Assertions.assertThat;
+import static pl.rtshadow.lem.benchmarks.guice.GuiceInjector.getInstance;
+
+import java.io.IOException;
+import java.util.UUID;
+
 import org.apache.hadoop.fs.BlockLocation;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.Text;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
+
 import pl.rtshadow.lem.benchmarks.contexts.AbstractTestWithContext;
 import pl.rtshadow.lem.benchmarks.hdfs.HdfsUtilities;
 
-import java.io.IOException;
-import java.util.UUID;
-
-import static com.google.common.collect.Sets.newHashSet;
-import static org.fest.assertions.Assertions.assertThat;
-import static pl.rtshadow.lem.benchmarks.guice.GuiceInjector.getInstance;
-
-public class BlockPlacementPolicyWorks extends AbstractTestWithContext {
+public class BlockPlacementPolicyWorksTest extends AbstractTestWithContext {
   public static final int NUMBER_OF_WRITES = 100;
   public static final String NEW_DATA = "newData";
   private Path X_FILE_PATH;

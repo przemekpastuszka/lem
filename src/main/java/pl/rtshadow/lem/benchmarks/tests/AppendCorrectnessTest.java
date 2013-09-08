@@ -1,5 +1,14 @@
 package pl.rtshadow.lem.benchmarks.tests;
 
+import static java.util.Collections.nCopies;
+import static org.apache.hadoop.util.StringUtils.join;
+import static org.fest.assertions.Assertions.assertThat;
+import static pl.rtshadow.lem.benchmarks.guice.GuiceInjector.getInstance;
+import static pl.rtshadow.lem.benchmarks.hdfs.HdfsUtilities.readWholeFile;
+
+import java.io.IOException;
+import java.util.UUID;
+
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -7,19 +16,11 @@ import org.apache.hadoop.io.Text;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+
 import pl.rtshadow.lem.benchmarks.contexts.AbstractTestWithContext;
 import pl.rtshadow.lem.benchmarks.hdfs.HdfsUtilities;
 
-import java.io.IOException;
-import java.util.UUID;
-
-import static java.util.Collections.nCopies;
-import static org.apache.hadoop.util.StringUtils.join;
-import static org.fest.assertions.Assertions.assertThat;
-import static pl.rtshadow.lem.benchmarks.guice.GuiceInjector.getInstance;
-import static pl.rtshadow.lem.benchmarks.hdfs.HdfsUtilities.readWholeFile;
-
-public class AppendCorrectness extends AbstractTestWithContext {
+public class AppendCorrectnessTest extends AbstractTestWithContext {
   public static final String BASIC_CONTENT = "content";
   public static final String APPENDED_DATA = "appendedData";
   public static final int NUMBER_OF_APPENDS = 100;

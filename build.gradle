@@ -6,19 +6,33 @@ repositories {
   mavenCentral()
 }
 
+def hadoopVersions = [
+    'old': '1.2.1',
+    'new': '2.1.0-beta'
+]
+
 dependencies {
   compile 'org.apache.commons:commons-lang3:3.1'
   compile 'com.google.guava:guava:14.0.1'
   compile 'com.google.inject:guice:3.0'
-  compile 'org.apache.hadoop:hadoop-core:1.2.1'
-//  compile 'org.apache.hadoop:hadoop-common:2.1.0-beta'
- // compile 'org.apache.hadoop:hadoop-hdfs:2.1.0-beta'
-  //compile 'org.apache.hadoop:hadoop-minicluster:2.1.0-beta'
+
+  if (newHadoop) {
+    compile "org.apache.hadoop:hadoop-common:${hadoopVersions.new}"
+    compile "org.apache.hadoop:hadoop-hdfs:${hadoopVersions.new}"
+    compile "org.apache.hadoop:hadoop-minicluster:${hadoopVersions.new}"
+  } else {
+    compile "org.apache.hadoop:hadoop-core:${hadoopVersions.old}"
+    compile "org.apache.hadoop:hadoop-test:${hadoopVersions.old}"
+  }
 
   compile 'org.mockito:mockito-all:1.9.5'
   compile 'org.easytesting:fest-assert:1.4'
   compile 'junit:junit:4.11'
-  compile 'org.apache.hadoop:hadoop-test:1.2.1'
+
+}
+
+boolean isNewHadoop() {
+  return System.properties['newHadoop'] == 'true'
 }
 
 compileJava {
@@ -26,6 +40,9 @@ compileJava {
   targetCompatibility = 1.6
 }
 
+task runInMemory(type: Test, dependsOn: jar) {
+  testClassesDir = sourceSets.main.output.classesDir
+}
 
 task runOnHadoop(type: Exec, dependsOn: jar) {
   def allJars = []

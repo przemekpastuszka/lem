@@ -1,19 +1,22 @@
 package pl.rtshadow.lem.benchmarks.tests;
 
+import static org.fest.assertions.Assertions.assertThat;
+import static pl.rtshadow.lem.benchmarks.guice.GuiceInjector.getInstance;
+import static pl.rtshadow.lem.benchmarks.hdfs.HdfsUtilities.appendFile;
+import static pl.rtshadow.lem.benchmarks.hdfs.HdfsUtilities.readWholeFile;
+import static pl.rtshadow.lem.benchmarks.hdfs.HdfsUtilities.writeFile;
+
+import java.io.IOException;
+
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+
 import pl.rtshadow.lem.benchmarks.contexts.AbstractTestWithContext;
 
-import java.io.IOException;
-
-import static org.fest.assertions.Assertions.assertThat;
-import static pl.rtshadow.lem.benchmarks.guice.GuiceInjector.getInstance;
-import static pl.rtshadow.lem.benchmarks.hdfs.HdfsUtilities.*;
-
-public class SimpleHdfsWriteReads extends AbstractTestWithContext {
+public class SimpleHdfsWriteReadsTest extends AbstractTestWithContext {
   private final static Path TEST_FILE_PATH = new Path("test_file");
 
   private FileSystem fileSystem;
