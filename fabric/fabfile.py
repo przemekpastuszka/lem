@@ -1,4 +1,4 @@
-from fabric.operations import put, run, local
+from fabric.operations import put, run, local, sudo
 from fabric.context_managers import cd, prefix, hide
 from fabric.api import execute
 import os
@@ -16,13 +16,28 @@ def deploy_and_run(jar, class_name, classpath):
     with hide('running', 'stdout'):
       run('mkdir -p libs')
       put_if_absent(classpath.split(';'), 'libs')
-      remote_jar = put(jar, 'hadoop_jar')[0]
+      remote_jar = put(jar, 'user.jar')[0]
     
     hadoop_classpath = ':'.join(
-      ['/tmp/libs/' + os.path.basename(path) for path in classpath.split(';')])
+      ['/tmp/libs/' + os.path.basename(path) for path in classpath.split(';') + ['user.jar']])
     with prefix("export HADOOP_CLASSPATH=" + hadoop_classpath):
+      HdfsService().start_if_not_running()
       run("hadoop jar {0} {1}".format(remote_jar, class_name))
 
+class HdfsService(object):
+  def is_running(self):
+    return is_running("NameNode")
+  
+  def start(self):
+    sudo("start-dfs.sh", user="hadoop")
+
+  def start_if_not_running(self):
+    if not self.is_running():
+      self.start()
+
+def is_running(hadoop_service):
+  result = sudo("jps -lm | grep {0}".format(hadoop_service), warn_only=True)
+  return result.succeeded
 
 def put_if_absent(local_paths, remote_dir):
   """Sends artifacts to remote location only if they don't already exist there
