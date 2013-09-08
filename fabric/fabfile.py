@@ -48,7 +48,7 @@ def get_master_ip(properties_file):
   """Given properties file find external ip of cluster master"""
   instances = get_instances(properties_file)
   masters = [x for x in instances if 'jobtracker' in x.roles]
-  return masters[0].external_ip
+  print masters[0].external_ip
 
 
 def get_instances(properties_file):
