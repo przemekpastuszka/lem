@@ -58,7 +58,7 @@ public class AppendCorrectnessTest extends AbstractTestWithContext {
       StringBuilder expected = new StringBuilder(BASIC_CONTENT);
       for (int i = 0; i < NUMBER_OF_APPENDS; ++i) {
         Text.writeString(appender, APPENDED_DATA);
-        appender.sync();
+        appender.hsync();
 
         expected.append(APPENDED_DATA);
         assertThat(readWholeFile(fileSystem, testFile)).isEqualTo(expected.toString());
@@ -74,7 +74,7 @@ public class AppendCorrectnessTest extends AbstractTestWithContext {
       StringBuilder expected = new StringBuilder(BASIC_CONTENT);
       for (int i = 0; i < NUMBER_OF_APPENDS; ++i) {
         Text.writeString(appender, APPENDED_DATA);
-        appender.flush();
+        appender.hflush();
 
         expected.append(APPENDED_DATA);
         assertThat(readWholeFile(fileSystem, testFile)).isEqualTo(expected.toString());

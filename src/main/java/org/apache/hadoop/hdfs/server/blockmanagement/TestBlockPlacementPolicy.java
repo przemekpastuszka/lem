@@ -1,4 +1,4 @@
-package org.apache.hadoop.hdfs.server.namenode;
+package org.apache.hadoop.hdfs.server.blockmanagement;
 
 import static com.google.common.collect.Collections2.transform;
 import static com.google.common.collect.Iterators.concat;
@@ -23,6 +23,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hdfs.DistributedFileSystem;
 import org.apache.hadoop.hdfs.protocol.Block;
 import org.apache.hadoop.hdfs.protocol.LocatedBlock;
+import org.apache.hadoop.hdfs.server.namenode.FSClusterStats;
 import org.apache.hadoop.net.NetworkTopology;
 import org.apache.hadoop.net.Node;
 
@@ -46,12 +47,12 @@ public class TestBlockPlacementPolicy extends BlockPlacementPolicy {
   }
 
   @Override
-  public DatanodeDescriptor[] chooseTarget(String srcPath, int numOfReplicas, DatanodeDescriptor writer, List<DatanodeDescriptor> chosenNodes, HashMap<Node, Node> excludedNodes, long blocksize) {
+  public DatanodeDescriptor[] chooseTarget(String srcPath, int numOfReplicas, DatanodeDescriptor writer, List<DatanodeDescriptor> chosenNodes, boolean returnChosenNodes, HashMap<Node, Node> excludedNodes, long blocksize) {
     List<DatanodeDescriptor> possibleLocations = getPossibleLocationsFor(srcPath);
     if(!possibleLocations.isEmpty()) {
       return formPipeline(possibleLocations, chosenNodes, numOfReplicas);
     }
-    return defaultPolicy.chooseTarget(srcPath, numOfReplicas, writer, chosenNodes, excludedNodes, blocksize);
+    return defaultPolicy.chooseTarget(srcPath, numOfReplicas, writer, chosenNodes, returnChosenNodes, excludedNodes, blocksize);
   }
 
   @Override
@@ -60,7 +61,7 @@ public class TestBlockPlacementPolicy extends BlockPlacementPolicy {
   }
 
   @Override
-  public DatanodeDescriptor chooseReplicaToDelete(FSInodeInfo srcInode, Block block, short replicationFactor, Collection<DatanodeDescriptor> existingReplicas, Collection<DatanodeDescriptor> moreExistingReplicas) {
+  public DatanodeDescriptor chooseReplicaToDelete(BlockCollection srcBC, Block block, short replicationFactor, Collection<DatanodeDescriptor> existingReplicas, Collection<DatanodeDescriptor> moreExistingReplicas) {
     throw new UnsupportedOperationException();
   }
 

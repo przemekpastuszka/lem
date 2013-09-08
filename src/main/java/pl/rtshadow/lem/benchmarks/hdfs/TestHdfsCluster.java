@@ -1,14 +1,12 @@
 package pl.rtshadow.lem.benchmarks.hdfs;
 
+import java.io.IOException;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.hdfs.MiniDFSCluster;
-import org.apache.hadoop.hdfs.server.namenode.BlockPlacementPolicy;
-import org.apache.hadoop.hdfs.server.namenode.TestBlockPlacementPolicy;
-
-import java.io.IOException;
-
-import static com.google.common.base.Preconditions.checkState;
+import org.apache.hadoop.hdfs.server.blockmanagement.BlockPlacementPolicy;
+import org.apache.hadoop.hdfs.server.blockmanagement.TestBlockPlacementPolicy;
 
 public class TestHdfsCluster {
   private static final int NUM_DATA_NODES = 5;

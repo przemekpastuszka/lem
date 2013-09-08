@@ -7,7 +7,6 @@ repositories {
 }
 
 def hadoopVersions = [
-    'old': '1.2.1',
     'new': '2.1.0-beta'
 ]
 
@@ -16,23 +15,14 @@ dependencies {
   compile 'com.google.guava:guava:14.0.1'
   compile 'com.google.inject:guice:3.0'
 
-  if (newHadoop) {
-    compile "org.apache.hadoop:hadoop-common:${hadoopVersions.new}"
-    compile "org.apache.hadoop:hadoop-hdfs:${hadoopVersions.new}"
-    compile "org.apache.hadoop:hadoop-minicluster:${hadoopVersions.new}"
-  } else {
-    compile "org.apache.hadoop:hadoop-core:${hadoopVersions.old}"
-    compile "org.apache.hadoop:hadoop-test:${hadoopVersions.old}"
-  }
+  compile "org.apache.hadoop:hadoop-common:${hadoopVersions.new}"
+  compile "org.apache.hadoop:hadoop-hdfs:${hadoopVersions.new}"
+  compile "org.apache.hadoop:hadoop-minicluster:${hadoopVersions.new}"
 
   compile 'org.mockito:mockito-all:1.9.5'
   compile 'org.easytesting:fest-assert:1.4'
   compile 'junit:junit:4.11'
 
-}
-
-boolean isNewHadoop() {
-  return System.properties['newHadoop'] == 'true'
 }
 
 compileJava {
