@@ -31,8 +31,7 @@ def put_if_absent(local_paths, remote_dir):
   local_paths - python list of paths that should be uploaded
   remote_dir
   """
-  local_artifacts = {
-    os.path.basename(local_path): local_path for local_path in local_paths}
+  local_artifacts = dict((os.path.basename(local_path), local_path) for local_path in local_paths)
   remote_artifacts = list_dir(remote_dir)
   absent_artifacts = set(local_artifacts.keys()) - set(remote_artifacts)
   for absent_artifact in absent_artifacts:
