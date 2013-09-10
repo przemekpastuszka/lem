@@ -27,14 +27,26 @@ import org.apache.hadoop.net.NetworkTopology;
 import org.apache.hadoop.net.Node;
 
 import com.google.common.base.Function;
+import pl.rtshadow.lem.benchmarks.hdfs.FileSystemService;
 
 public class TestBlockPlacementPolicy extends BlockPlacementPolicy {
-  private final static Pattern MANAGED_FILES_DIRECTORY = compile("(.*/managed/[^/]+/).+");
+  private final static Pattern MANAGED_FILES_DIRECTORY = compile("(.*managed/[^/]+/).+");
 
-  private final BlockPlacementPolicy defaultPolicy = new BlockPlacementPolicyDefault();
+  private final BlockPlacementPolicy defaultPolicy;
+  private final FileSystemService fileSystemService;
+
   private Configuration configuration;
-  private DistributedFileSystem fileSystem;
   private NetworkTopology networkTopology;
+  private DistributedFileSystem fileSystem;
+
+  public TestBlockPlacementPolicy() {
+    this(new BlockPlacementPolicyDefault(), new FileSystemService());
+  }
+
+  public TestBlockPlacementPolicy(BlockPlacementPolicy defaultPolicy, FileSystemService fileSystemService) {
+    this.fileSystemService = fileSystemService;
+    this.defaultPolicy = defaultPolicy;
+  }
 
   @Override
   DatanodeDescriptor[] chooseTarget(String srcPath, int numOfReplicas, DatanodeDescriptor writer, List<DatanodeDescriptor> chosenNodes, long blocksize) {
@@ -73,11 +85,7 @@ public class TestBlockPlacementPolicy extends BlockPlacementPolicy {
 
   private DistributedFileSystem getFileSystem() {
     if (fileSystem == null) {
-      try {
-        fileSystem = (DistributedFileSystem) DistributedFileSystem.get(configuration);
-      } catch (IOException e) {
-        throw new RuntimeException(e);
-      }
+      fileSystem = fileSystemService.getFileSystem(configuration);
     }
     return fileSystem;
   }
@@ -120,8 +128,9 @@ public class TestBlockPlacementPolicy extends BlockPlacementPolicy {
 
   private int computeNumberOfNextBlock(String path) {
     try {
-      BlockLocation[] fileStatus = getFileSystem().getFileBlockLocations(getFileSystem().getFileStatus(new Path(path)), 0, Long.MAX_VALUE);
-      return fileStatus.length;
+      FileStatus fileStatus = getFileSystem().getFileStatus(new Path(path));
+      BlockLocation[] locations = getFileSystem().getFileBlockLocations(fileStatus, 0, Long.MAX_VALUE);
+      return locations.length;
     } catch (IOException e) {
       return 0;
     }
