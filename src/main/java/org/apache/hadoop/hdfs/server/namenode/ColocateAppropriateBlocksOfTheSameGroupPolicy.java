@@ -29,7 +29,7 @@ import org.apache.hadoop.net.Node;
 import com.google.common.base.Function;
 import pl.rtshadow.lem.benchmarks.hdfs.FileSystemService;
 
-public class TestBlockPlacementPolicy extends BlockPlacementPolicy {
+public class ColocateAppropriateBlocksOfTheSameGroupPolicy extends BlockPlacementPolicy {
   private final static Pattern MANAGED_FILES_DIRECTORY = compile("(.*managed/[^/]+/).+");
 
   private final BlockPlacementPolicy defaultPolicy;
@@ -39,11 +39,11 @@ public class TestBlockPlacementPolicy extends BlockPlacementPolicy {
   private NetworkTopology networkTopology;
   private DistributedFileSystem fileSystem;
 
-  public TestBlockPlacementPolicy() {
+  public ColocateAppropriateBlocksOfTheSameGroupPolicy() {
     this(new BlockPlacementPolicyDefault(), new FileSystemService());
   }
 
-  public TestBlockPlacementPolicy(BlockPlacementPolicy defaultPolicy, FileSystemService fileSystemService) {
+  public ColocateAppropriateBlocksOfTheSameGroupPolicy(BlockPlacementPolicy defaultPolicy, FileSystemService fileSystemService) {
     this.fileSystemService = fileSystemService;
     this.defaultPolicy = defaultPolicy;
   }
