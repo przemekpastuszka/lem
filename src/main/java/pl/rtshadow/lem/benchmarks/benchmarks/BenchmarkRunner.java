@@ -38,28 +38,28 @@ public class BenchmarkRunner extends AbstractTestWithContext {
 
   protected void performTest(final BenchmarkCase benchmarkCase, final int executionCount, int threadCount) throws Exception {
     ExecutorService executorService = newFixedThreadPool(threadCount);
-    Callable<List<Long>> singleBenchmark = new Callable<List<Long>>() {
+    Callable<List<String>> singleBenchmark = new Callable<List<String>>() {
       @Override
-      public List<Long> call() throws Exception {
+      public List<String> call() throws Exception {
         return performTest(benchmarkCase, executionCount);
       }
     };
 
-    List<Future<List<Long>>> futures = executorService.invokeAll(nCopies(threadCount, singleBenchmark));
-    List<Long> result = newArrayListWithCapacity(executionCount * threadCount);
-    for(Future<List<Long>> future : futures) {
+    List<Future<List<String>>> futures = executorService.invokeAll(nCopies(threadCount, singleBenchmark));
+    List<String> result = newArrayListWithCapacity(executionCount * threadCount);
+    for(Future<List<String>> future : futures) {
        result.addAll(future.get());
     }
 
     write(result, RESULT_FILE_PREFIX + testName.getMethodName());
   }
 
-  private List<Long> performTest(BenchmarkCase benchmarkCase, int executionCount) throws Exception {
-    List<Long> timesOfCompletion = newArrayListWithCapacity(executionCount);
+  private List<String> performTest(BenchmarkCase benchmarkCase, int executionCount) throws Exception {
+    List<String> timesOfCompletion = newArrayListWithCapacity(executionCount);
 
     for (int i = 0; i < executionCount; ++i) {
       benchmarkCase.run(fileSystem);
-      timesOfCompletion.add(nanoTime());
+      timesOfCompletion.add(Long.toString(nanoTime()));
     }
 
     return timesOfCompletion;
