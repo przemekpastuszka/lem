@@ -16,13 +16,13 @@ def deploy_and_run(jar, class_name, classpath, arguments=''):
     with hide('running', 'stdout'):
       run('mkdir -p libs')
       put_if_absent(classpath.split(';'), 'libs')
-      remote_jar = put(jar, 'user.jar')[0]
+      remote_jar = put(jar, 'libs/user.jar')[0]
     
-    hadoop_classpath = ':'.join(
-      ['/tmp/libs/' + os.path.basename(path) for path in classpath.split(';') + ['user.jar']])
-    with prefix("export HADOOP_CLASSPATH=" + hadoop_classpath):
-      #HdfsService().start_if_not_running()
-      run("hadoop jar {0} {1} {2}".format(remote_jar, class_name, arguments))
+    hadoop_classpath =['/tmp/libs/' + os.path.basename(path) for path in classpath.split(';') + ['user.jar']]
+    with prefix("export HADOOP_USER_CLASSPATH_FIRST=true"):
+      with prefix("export HADOOP_CLASSPATH=" + ':'.join(hadoop_classpath)):
+        #HdfsService().start_if_not_running()
+        run("hadoop jar {0} {1} {2}".format(remote_jar, class_name, arguments))
 
 class HdfsService(object):
   def is_running(self):
