@@ -50,6 +50,8 @@ task runOnHadoop(type: Exec, dependsOn: jar) {
     allJars.add(file)
   }
   workingDir "${rootDir}/fabric"
-  commandLine 'fab', "-H ${System.properties['master']}", "deploy_and_run:${files(jar.archivePath).singleFile},pl.rtshadow.lem.benchmarks.RealHdfsRunner,${allJars.join(';')}"
+  def deploy_and_run_args = [files(jar.archivePath).singleFile, 'pl.rtshadow.lem.benchmarks.RealHdfsRunner', allJars.join(';'), System.properties['arguments']]
+  deploy_and_run_args.removeAll([null])
+  commandLine 'fab','--abort-on-prompts', "-H ${System.properties['master']}","deploy_and_run:${deploy_and_run_args.join(',')}"
 }
 

@@ -26,9 +26,7 @@ public class RealHdfsRunner extends Configured implements Tool {
     FileSystem fileSystem = FileSystem.get(getConf());
     GuiceInjector.setModule(new RealHdfsModule(fileSystem));
 
-    Result result = JUnitCore.runClasses(SimpleHdfsWriteReadsTest.class, AppendCorrectnessTest.class, BlockPlacementPolicyWorksTest.class);
-    new TextListener(System.out).testRunFinished(result);
-
-    return result.getFailureCount() > 0 ? 1 : 0;
+    JUnitCore.main(args);
+    return 0;
   }
 }

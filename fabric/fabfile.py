@@ -4,7 +4,7 @@ from fabric.api import execute
 import os
 
 
-def deploy_and_run(jar, class_name, classpath):
+def deploy_and_run(jar, class_name, classpath, arguments=''):
   """Deploy and run hadoop job
 
   Arguments:
@@ -21,8 +21,8 @@ def deploy_and_run(jar, class_name, classpath):
     hadoop_classpath = ':'.join(
       ['/tmp/libs/' + os.path.basename(path) for path in classpath.split(';') + ['user.jar']])
     with prefix("export HADOOP_CLASSPATH=" + hadoop_classpath):
-      HdfsService().start_if_not_running()
-      run("hadoop jar {0} {1}".format(remote_jar, class_name))
+      #HdfsService().start_if_not_running()
+      run("hadoop jar {0} {1} {2}".format(remote_jar, class_name, arguments))
 
 class HdfsService(object):
   def is_running(self):
