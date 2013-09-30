@@ -1,5 +1,14 @@
 package org.apache.hadoop.hdfs.server.namenode;
 
+import static java.util.Collections.EMPTY_LIST;
+import static org.fest.assertions.Assertions.assertThat;
+import static org.fest.util.Collections.list;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+import java.io.IOException;
+import java.util.List;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.BlockLocation;
 import org.apache.hadoop.fs.FileStatus;
@@ -12,23 +21,18 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+
 import pl.rtshadow.lem.benchmarks.hdfs.FileSystemService;
 
-import java.io.IOException;
-import java.util.List;
-
-import static java.util.Collections.EMPTY_LIST;
-import static org.fest.assertions.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
 @RunWith(MockitoJUnitRunner.class)
-public class TestBlockPlacementPolicyTest {
+public class ColocateAppropriateBlocksOfTheSameGroupPolicyTest {
   private static final int BLOCKSIZE = 512;
   private static final int NUM_OF_REPLICAS = 3;
   private static final String MANAGED_FIRST_FILE_PATH = "managed/A/first";
   private static final String MANAGED_SECOND_FILE_PATH = "managed/A/second";
   private static final String NON_MANAGED_FILE_PATH = "somePath";
+  private static final String NODE_A_NAME = "nodeA";
+  private static final String NODE_B_NAME = "nodeB";
 
   @Mock
   private BlockPlacementPolicy defaultBlockPlacementPolicy;
@@ -47,12 +51,15 @@ public class TestBlockPlacementPolicyTest {
   private DatanodeDescriptor writer, datanodeA, datanodeB, fallbackDatanode;
 
   @InjectMocks
-  private TestBlockPlacementPolicy testBlockPlacementPolicy;
+  private ColocateAppropriateBlocksOfTheSameGroupPolicy colocateAppropriateBlocksOfTheSameGroupPolicy;
 
   @Before
   public void setup() throws IOException {
     when(fileSystemService.getFileSystem(configuration)).thenReturn(distributedFileSystem);
-    testBlockPlacementPolicy.initialize(configuration, null, networkTopology);
+    colocateAppropriateBlocksOfTheSameGroupPolicy.initialize(configuration, null, networkTopology);
+
+    when(networkTopology.getNode(NODE_A_NAME)).thenReturn(datanodeA);
+    when(networkTopology.getNode(NODE_B_NAME)).thenReturn(datanodeB);
 
     prepareFile(MANAGED_FIRST_FILE_PATH, firstFileStatus, EMPTY_LIST);
     prepareFile(MANAGED_SECOND_FILE_PATH, secondFileStatus, EMPTY_LIST);
@@ -63,16 +70,25 @@ public class TestBlockPlacementPolicyTest {
   public void delegatesNonManagedPathToDefaultPlacementPolicy() throws IOException {
     setupFallbackFor(NON_MANAGED_FILE_PATH);
 
-    DatanodeDescriptor[] result = testBlockPlacementPolicy.chooseTarget(NON_MANAGED_FILE_PATH, NUM_OF_REPLICAS, writer, EMPTY_LIST, BLOCKSIZE);
+    DatanodeDescriptor[] result = colocateAppropriateBlocksOfTheSameGroupPolicy.chooseTarget(NON_MANAGED_FILE_PATH, NUM_OF_REPLICAS, writer, EMPTY_LIST, BLOCKSIZE);
 
     assertThat(result).hasSize(1).containsOnly(fallbackDatanode);
   }
 
   @Test
   public void fallsBackToDefaultPlacementPolicyIfNoOtherBlockWasCreated() throws IOException {
-    DatanodeDescriptor[] result = testBlockPlacementPolicy.chooseTarget(MANAGED_FIRST_FILE_PATH, NUM_OF_REPLICAS, writer, EMPTY_LIST, BLOCKSIZE);
+    DatanodeDescriptor[] result = colocateAppropriateBlocksOfTheSameGroupPolicy.chooseTarget(MANAGED_FIRST_FILE_PATH, NUM_OF_REPLICAS, writer, EMPTY_LIST, BLOCKSIZE);
 
     assertThat(result).hasSize(1).containsOnly(fallbackDatanode);
+  }
+
+  @Test
+  public void choosesSameNodesForBlockOfOtherFile() throws IOException {
+    prepareFile(MANAGED_FIRST_FILE_PATH, firstFileStatus, list(list(NODE_A_NAME, NODE_B_NAME)));
+
+    DatanodeDescriptor[] result = colocateAppropriateBlocksOfTheSameGroupPolicy.chooseTarget(MANAGED_SECOND_FILE_PATH, NUM_OF_REPLICAS, writer, EMPTY_LIST, BLOCKSIZE);
+
+    assertThat(result).hasSize(2).containsOnly(datanodeA, datanodeB);
   }
 
   private void setupFallbackFor(String path) {
