@@ -1,10 +1,23 @@
-from fabric.operations import put, run, local, sudo
-from fabric.context_managers import cd, prefix, hide
+from fabric.operations import put, run, local, sudo, get
+from fabric.context_managers import cd, prefix, hide, settings
 from fabric.api import execute
 import os
+import datetime
+
+def deploy(jar, classpath):
+   with cd('/tmp'):
+     with hide('running', 'stdout'):
+       run('mkdir -p libs')
+       put_if_absent(classpath.split(';'), 'libs')
+       remote_jar = put(jar, 'libs/user.jar')[0]
 
 
-def deploy_and_run(jar, class_name, classpath, arguments=''):
+def run_jar_silently(jar, classpath, class_name, arguments=''):
+  with settings(warn_only=True):
+    run_jar(jar, classpath, class_name, arguments)
+
+
+def run_jar(jar, classpath, class_name, arguments=''):
   """Deploy and run hadoop job
 
   Arguments:
@@ -13,16 +26,18 @@ def deploy_and_run(jar, class_name, classpath, arguments=''):
   classpath - semicolon-delimited list of jars, that should be used as hadoop's classpath
   """
   with cd('/tmp'):
-    with hide('running', 'stdout'):
-      run('mkdir -p libs')
-      put_if_absent(classpath.split(';'), 'libs')
-      remote_jar = put(jar, 'libs/user.jar')[0]
-    
     hadoop_classpath =['/tmp/libs/' + os.path.basename(path) for path in classpath.split(';') + ['user.jar']]
     with prefix("export HADOOP_USER_CLASSPATH_FIRST=true"):
       with prefix("export HADOOP_CLASSPATH=" + ':'.join(hadoop_classpath)):
         #HdfsService().start_if_not_running()
-        run("hadoop jar {0} {1} {2}".format(remote_jar, class_name, arguments))
+        run("hadoop jar {0} {1} {2}".format('libs/user.jar', class_name, arguments))
+
+
+def collect_results():
+  result_dir = 'testresults/' + datetime.datetime.now().strftime("%Y-%m-%d_%H:%M:%S") + '/%(host)s'
+  get('/tmp/lemtest', result_dir)
+  run('rm -rf /tmp/lemtest')
+
 
 class HdfsService(object):
   def is_running(self):

@@ -1,8 +1,11 @@
 package pl.rtshadow.lem.benchmarks.benchmarks;
 
 
+import com.thoughtworks.xstream.XStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.junit.Before;
+import org.junit.Rule;
+import org.junit.rules.TestName;
 import pl.rtshadow.lem.benchmarks.contexts.AbstractTestWithContext;
 
 import java.io.IOException;
@@ -17,9 +20,15 @@ import static com.google.common.collect.Lists.newArrayListWithCapacity;
 import static java.lang.System.nanoTime;
 import static java.util.Collections.nCopies;
 import static java.util.concurrent.Executors.newFixedThreadPool;
+import static pl.rtshadow.lem.benchmarks.benchmarks.ResultReaderWriter.write;
 import static pl.rtshadow.lem.benchmarks.guice.GuiceInjector.getInstance;
 
 public class BenchmarkRunner extends AbstractTestWithContext {
+  private final static String RESULT_FILE_PREFIX = "/tmp/lemtest/";
+
+  @Rule
+  public TestName testName = new TestName();
+
   private FileSystem fileSystem;
 
   @Before
@@ -27,7 +36,7 @@ public class BenchmarkRunner extends AbstractTestWithContext {
     fileSystem = getInstance(FileSystem.class);
   }
 
-  protected List<Long> performTest(final BenchmarkCase benchmarkCase, final int executionCount, int threadCount) throws Exception {
+  protected void performTest(final BenchmarkCase benchmarkCase, final int executionCount, int threadCount) throws Exception {
     ExecutorService executorService = newFixedThreadPool(threadCount);
     Callable<List<Long>> singleBenchmark = new Callable<List<Long>>() {
       @Override
@@ -41,7 +50,8 @@ public class BenchmarkRunner extends AbstractTestWithContext {
     for(Future<List<Long>> future : futures) {
        result.addAll(future.get());
     }
-    return result;
+
+    write(result, RESULT_FILE_PREFIX + testName.getMethodName());
   }
 
   private List<Long> performTest(BenchmarkCase benchmarkCase, int executionCount) throws Exception {

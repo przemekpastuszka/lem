@@ -12,6 +12,7 @@ def hadoopVersions = [
 ]
 
 dependencies {
+  compile 'xstream:xstream:1.2.2'
   compile 'org.apache.commons:commons-lang3:3.1'
   compile 'com.google.guava:guava:14.0.1'
   compile 'com.google.inject:guice:3.0'
@@ -50,8 +51,17 @@ task runOnHadoop(type: Exec, dependsOn: jar) {
     allJars.add(file)
   }
   workingDir "${rootDir}/fabric"
-  def deploy_and_run_args = [files(jar.archivePath).singleFile, 'pl.rtshadow.lem.benchmarks.RealHdfsRunner', allJars.join(';'), System.properties['arguments']]
-  deploy_and_run_args.removeAll([null])
-  commandLine 'fab','--abort-on-prompts', "-H ${System.properties['master']}","deploy_and_run:${deploy_and_run_args.join(',')}"
+  def deploy_args = [files(jar.archivePath).singleFile, allJars.join(';')]
+  def run_args = deploy_args + ['pl.rtshadow.lem.benchmarks.RealHdfsRunner']
+  if(System.properties['arguments']) {
+    run_args.add(System.properties['arguments'])
+  }
+  commandLine fabric_command_for(System.properties['hosts']) + ["deploy:${deploy_args.join(',')}", "run_jar_silently:${run_args.join(',')}", 'collect_results']
 }
+
+def fabric_command_for(String hosts) {
+  ['fab', '--abort-on-prompts','-P',"-H ${hosts}"]
+}
+
+
 

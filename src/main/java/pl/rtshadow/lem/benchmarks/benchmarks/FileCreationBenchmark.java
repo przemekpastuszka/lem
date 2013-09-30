@@ -6,16 +6,14 @@ import org.apache.hadoop.fs.Path;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.UUID;
 
 import static pl.rtshadow.lem.benchmarks.hdfs.HdfsUtilities.writeFile;
 
 public class FileCreationBenchmark extends BenchmarkRunner {
   @Test
-  public void testFileCreation() throws Exception {
-    List<Long> executionTimes = performTest(prepareCase(), 1000, 1);
-
+  public void testFileCreationWithNoDataWritten() throws Exception {
+    performTest(prepareCase(), 10, 1);
   }
 
   private BenchmarkCase prepareCase() {
