@@ -46,21 +46,41 @@ task runInMemory(type: Test, dependsOn: jar) {
 }
 
 task runOnHadoop(type: Exec, dependsOn: jar) {
-  def allJars = []
-  for (file in configurations.compile) {
-    allJars.add(file)
-  }
   workingDir "${rootDir}/fabric"
-  def deploy_args = [files(jar.archivePath).singleFile, allJars.join(';')]
-  def run_args = deploy_args + ['pl.rtshadow.lem.benchmarks.RealHdfsRunner']
-  if(System.properties['arguments']) {
-    run_args.add(System.properties['arguments'])
+
+  doFirst {
+    def allJars = []
+    for (file in configurations.compile) {
+      allJars.add(file)
+    }
+    def deploy_args = [files(jar.archivePath).singleFile, allJars.join(';')]
+    def run_args = deploy_args + ['pl.rtshadow.lem.benchmarks.RealHdfsRunner']
+    if (System.properties['arguments']) {
+      run_args.add(System.properties['arguments'])
+    }
+    commandLine fabric_command_for(System.properties['hosts']) + ["deploy:${deploy_args.join(',')}", "run_jar_silently:${run_args.join(',')}", 'collect_results']
   }
-  commandLine fabric_command_for(System.properties['hosts']) + ["deploy:${deploy_args.join(',')}", "run_jar_silently:${run_args.join(',')}", 'collect_results']
+}
+
+task mergeResults(type: JavaExec) {
+  inputs.dir System.properties['files']
+  outputs.file new File('/tmp/merge_result.csv')
+
+  doFirst {
+    def filesToMerge = []
+    def dir = new File(System.properties['files'])
+    dir.eachFileRecurse(groovy.io.FileType.FILES) { file ->
+      filesToMerge << file
+    }
+    args = filesToMerge
+  }
+
+  main = 'pl.rtshadow.lem.benchmarks.benchmarks.ResultsMerger'
+  classpath = sourceSets.main.runtimeClasspath
 }
 
 def fabric_command_for(String hosts) {
-  ['fab', '--abort-on-prompts','-P',"-H ${hosts}"]
+  ['fab', '--abort-on-prompts', '-P', "-H ${hosts}"]
 }
 
 
