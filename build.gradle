@@ -4,12 +4,19 @@ apply plugin: 'java'
 repositories {
   flatDir dirs: "${rootDir}/lib"
   mavenCentral()
+  maven {
+    url 'https://repository.cloudera.com/artifactory/cloudera-repos/'
+  }
 }
 
-def hadoopVersions = [
-    'old': '1.2.1',
-    'new': '2.1.0-beta'
+ext.versions = [
+  cloudera_hadoop:      '2.0.0-cdh4.3.0',
+  cloudera_hadoop_mr1:  '2.0.0-mr1-cdh4.3.0',
 ]
+
+configurations {
+  all*.exclude module: "commons-daemon"
+}
 
 dependencies {
   compile 'xstream:xstream:1.2.2'
@@ -17,23 +24,19 @@ dependencies {
   compile 'com.google.guava:guava:14.0.1'
   compile 'com.google.inject:guice:3.0'
 
-  if (newHadoop) {
-    compile "org.apache.hadoop:hadoop-common:${hadoopVersions.new}"
-    compile "org.apache.hadoop:hadoop-hdfs:${hadoopVersions.new}"
-    compile "org.apache.hadoop:hadoop-minicluster:${hadoopVersions.new}"
-  } else {
-    compile "org.apache.hadoop:hadoop-core:${hadoopVersions.old}"
-    compile "org.apache.hadoop:hadoop-test:${hadoopVersions.old}"
-  }
+  compile  "org.apache.hadoop:hadoop-annotations:${versions.cloudera_hadoop}"
+  compile        "org.apache.hadoop:hadoop-common:${versions.cloudera_hadoop}"
+  compile   "org.apache.hadoop:hadoop-hdfs:${versions.cloudera_hadoop}"
+  compile    "org.apache.hadoop:hadoop-hdfs:${versions.cloudera_hadoop}:tests"
+  compile          "org.apache.hadoop:hadoop-core:${versions.cloudera_hadoop_mr1}"
+  compile         "org.apache.hadoop:hadoop-tools:${versions.cloudera_hadoop_mr1}"
+  compile          "org.apache.hadoop:hadoop-test:${versions.cloudera_hadoop_mr1}"
+  compile                       "org.apache.hadoop:hadoop-common:${versions.cloudera_hadoop}:tests"
 
   compile 'org.mockito:mockito-all:1.9.5'
   compile 'org.easytesting:fest-assert:1.4'
   compile 'junit:junit:4.11'
 
-}
-
-boolean isNewHadoop() {
-  return System.properties['newHadoop'] == 'true'
 }
 
 compileJava {
@@ -84,7 +87,7 @@ task mergeResults(type: JavaExec) {
 }
 
 def fabric_command_for(String hosts) {
-  ['fab', '--abort-on-prompts', '-P', "-H ${hosts}"]
+  ['fab', '--abort-on-prompts', '-P', "-H ${hosts}", '-u', 'root']
 }
 
 

@@ -30,7 +30,7 @@ def run_jar(jar, classpath, class_name, arguments=''):
     with prefix("export HADOOP_USER_CLASSPATH_FIRST=true"):
       with prefix("export HADOOP_CLASSPATH=" + ':'.join(hadoop_classpath)):
         #HdfsService().start_if_not_running()
-        run("hadoop jar {0} {1} {2}".format('libs/user.jar', class_name, arguments))
+        sudo("hadoop jar {0} {1} {2}".format('libs/user.jar', class_name, arguments), user='hdfs')
 
 
 def collect_results():

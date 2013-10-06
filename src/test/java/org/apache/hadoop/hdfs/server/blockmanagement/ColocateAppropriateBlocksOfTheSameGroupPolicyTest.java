@@ -1,4 +1,4 @@
-package org.apache.hadoop.hdfs.server.namenode;
+package org.apache.hadoop.hdfs.server.blockmanagement;
 
 import static java.util.Collections.EMPTY_LIST;
 import static org.fest.assertions.Assertions.assertThat;
@@ -14,6 +14,9 @@ import org.apache.hadoop.fs.BlockLocation;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hdfs.DistributedFileSystem;
+import org.apache.hadoop.hdfs.server.blockmanagement.BlockPlacementPolicy;
+import org.apache.hadoop.hdfs.server.blockmanagement.ColocateAppropriateBlocksOfTheSameGroupPolicy;
+import org.apache.hadoop.hdfs.server.blockmanagement.DatanodeDescriptor;
 import org.apache.hadoop.net.NetworkTopology;
 import org.junit.Before;
 import org.junit.Test;
