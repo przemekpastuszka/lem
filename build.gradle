@@ -41,6 +41,10 @@ compileJava {
   targetCompatibility = 1.6
 }
 
+task wrapper(type: Wrapper) {
+    gradleVersion = '1.8'
+}
+
 task runInMemory(type: Test, dependsOn: jar) {
   testClassesDir = sourceSets.main.output.classesDir
 }
