@@ -29,7 +29,7 @@ public class BenchmarkRunner extends AbstractTestWithContext {
   @Rule
   public TestName testName = new TestName();
 
-  private FileSystem fileSystem;
+  protected FileSystem fileSystem;
 
   @Before
   public void setup() throws IOException {

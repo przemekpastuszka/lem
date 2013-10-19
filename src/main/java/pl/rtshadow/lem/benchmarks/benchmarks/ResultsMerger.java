@@ -43,17 +43,23 @@ public class ResultsMerger {
 
     String lastValue = "-1";
     int i = 0;
-    List<String> output = newLinkedList();
+    List<String> mergedResults = newArrayList();
     for (String result : allResults) {
       if (!result.equals(lastValue)) {
-        output.add(result + ";" + i);
+        mergedResults.add(result + "," + i);
       }
       lastValue = result;
       ++i;
     }
 
+    int sizeOfMergedResults = mergedResults.size();
+    int skipSize = (int) (sizeOfMergedResults / 100.0);
+    List<String> chosenResults = newArrayList();
+    for(i = 0; i < sizeOfMergedResults; i += skipSize) {
+       chosenResults.add(mergedResults.get(i));
+    }
 
-    ResultReaderWriter.write(output, "/tmp/merge_result.csv");
+    ResultReaderWriter.write(chosenResults, "/tmp/merge_result.csv");
   }
 
   private static <T> List<T> flatten(List<List<T>> lists) {
